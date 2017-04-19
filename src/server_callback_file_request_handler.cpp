@@ -16,18 +16,26 @@
 namespace http::server{
 
 
-	callback_file_request_handler::callback_file_request_handler(std::string const& dir):
+	callback_file_request_handler::callback_file_request_handler(
+		std::string const& dir
+	):
 		dir_(dir)
 		{}
 
-	bool callback_file_request_handler::handle_request(connection_ptr const&, http::request const& req, http::reply& rep){
+	bool callback_file_request_handler::handle_request(
+		connection_ptr const&,
+		http::request const& req,
+		http::reply& rep
+	){
 		// Request path must be absolute and not contain "/..".
 		if(!check_uri(req, rep)) return false;
 
 		// Check if requestet file in virtual subdirectory
 		std::string filename = dir_.empty() ? req.uri : req.uri.substr(1);
 		std::size_t dir_length = dir_.size() + 1;
-		if(dir_length > filename.size() || filename.compare(0, dir_length, dir_ + "/") != 0){
+		if(dir_length > filename.size() ||
+			filename.compare(0, dir_length, dir_ + "/") != 0
+		){
 			rep = http::reply::stock_reply(http::reply::bad_request);
 			return false;
 		}
@@ -45,13 +53,18 @@ namespace http::server{
 		/// Set content length and mime type
 		rep.status = reply::ok;
 		rep.content = std::get< 1 >(file->second)(req);
-		set_http_header(rep, mime_types::extension_to_type(std::get< 0 >(file->second)));
+		set_http_header(rep,
+			mime_types::extension_to_type(std::get< 0 >(file->second)));
 
 		return true;
 	}
 
 	/// Add a new virtual file
-	bool callback_file_request_handler::add(std::string const& filename, std::string const& mime_type, std::function< std::string(http::request const& req) > const& callback){
+	bool callback_file_request_handler::add(
+		std::string const& filename,
+		std::string const& mime_type,
+		std::function< std::string(http::request const& req) > const& callback
+	){
 		if(files_.find(filename) != files_.end()) return false;
 
 		files_.insert(make_pair(filename, make_pair(mime_type, callback)));

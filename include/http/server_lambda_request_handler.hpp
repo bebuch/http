@@ -17,20 +17,27 @@
 namespace http::server{
 
 
+	using handler_fn = std::function<
+		bool(connection_ptr const&, http::request const&, http::reply&) >;
+
+	using shutdown_fn = std::function< void() >;
+
+
 	///\brief  A simple callback handler
 	class lambda_request_handler: public request_handler{
 	public:
 		/// \brief Constructs a handler, that calls the given function
-		lambda_request_handler(
-			std::function< bool(connection_ptr const&, http::request const&, http::reply&) > handler,
-			std::function< void() > shutdown = std::function< void() >()
-		):
+		lambda_request_handler(handler_fn handler, shutdown_fn shutdown = []{}):
 			handler_function_(handler),
 			shutdown_function_(shutdown)
 			{}
 
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(connection_ptr const& connection, http::request const& req, http::reply& rep) override{
+		virtual bool handle_request(
+			connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		)override{
 			return handler_function_(connection, req, rep);
 		}
 
@@ -41,7 +48,7 @@ namespace http::server{
 
 	private:
 		/// \brief The functor who is called from the handler
-		std::function< bool(connection_ptr const&, http::request const&, http::reply&) > handler_function_;
+		handler_fn handler_function_;
 
 		/// \brief The functor who is called from the handler
 		std::function< void() > shutdown_function_;

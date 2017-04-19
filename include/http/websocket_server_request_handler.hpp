@@ -25,13 +25,20 @@ namespace http::websocket::server{
 	class request_handler: public http::server::request_handler{
 	public:
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(http::server::connection_ptr const& connection, http::request const& req, http::reply& rep) override;
+		virtual bool handle_request(
+			http::server::connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		) override;
 
 		/// \brief Call shutdown() for all services
 		virtual void shutdown() override;
 
 		/// \brief Binds a name to websocket service.
-		bool register_service(std::string const& name, service_ptr const& service);
+		bool register_service(
+			std::string const& name,
+			service_ptr const& service
+		);
 
 	private:
 		/// \brief The websocket services

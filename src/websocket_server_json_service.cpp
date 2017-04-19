@@ -13,26 +13,32 @@
 namespace http::websocket::server{
 
 
-	std::string to_json(boost::property_tree::ptree const& data){
+	std::string to_json(ptree const& data){
 		std::ostringstream message;
 		write_json(message, data);
 		return message.str();
 	}
 
-	void json_service::json_callback_type::operator()(std::string const& message, http::server::connection_ptr const& connection)const{
+	void json_service::json_callback_type::operator()(
+		std::string const& message,
+		http::server::connection_ptr const& connection
+	)const{
 		if (!json_callback_) return;
 
-		boost::property_tree::ptree data;
+		ptree data;
 		std::istringstream is(message);
 		read_json(is, data);
 		json_callback_(data, connection);
 	}
 
-	void json_service::send_json(boost::property_tree::ptree const& data){
+	void json_service::send_json(ptree const& data){
 		send_utf8(to_json(data));
 	}
 
-	void json_service::send_json(boost::property_tree::ptree const& data, http::server::connection_ptr const& connection){
+	void json_service::send_json(
+		ptree const& data,
+		http::server::connection_ptr const& connection
+	){
 		send_utf8(to_json(data), connection);
 	}
 

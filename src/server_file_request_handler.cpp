@@ -22,7 +22,11 @@ namespace http::server{
 		doc_root_(doc_root)
 		{}
 
-	bool file_request_handler::handle_request(connection_ptr const& /*connection*/, http::request const& req, http::reply& rep){
+	bool file_request_handler::handle_request(
+		connection_ptr const&,
+		http::request const& req,
+		http::reply& rep
+	){
 		// Request path must be absolute and not contain "/..".
 		if(!check_uri(req, rep)) return false;
 
@@ -45,7 +49,10 @@ namespace http::server{
 		return true;
 	}
 
-	bool file_request_handler::read_file(http::reply& rep, std::string const& filename)const{
+	bool file_request_handler::read_file(
+		http::reply& rep,
+		std::string const& filename
+	)const{
 		// Open the file to send back.
 		std::string full_path = doc_root_ + filename;
 		std::ifstream is(full_path.c_str(), std::ios::in | std::ios::binary);

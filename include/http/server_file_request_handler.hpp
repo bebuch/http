@@ -22,10 +22,15 @@ namespace http::server{
 		explicit file_request_handler(std::string const& doc_root);
 
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(connection_ptr const& connection, http::request const& req, http::reply& rep) override;
+		virtual bool handle_request(
+			connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		) override;
 
 	protected:
-		/// \brief Open the file to send back and fill out the reply to be sent to the client.
+		/// \brief Open the file to send back and fill out the reply to be sent
+		///        to the client.
 		bool read_file(http::reply& rep, std::string const& filename)const;
 
 		/// \brief The directory containing the files to be served.

@@ -17,10 +17,16 @@
 namespace http::websocket::server{
 
 
+	using boost::system::error_code;
+
+
 	namespace impl{ // Never use these functions direct
 
 
-		std::shared_ptr< std::string const > build_data_frame_data(websocket::frame::opcode opcode, std::string const& message){
+		std::shared_ptr< std::string const > build_data_frame_data(
+			websocket::frame::opcode opcode,
+			std::string const& message
+		){
 			std::string data;
 			data += static_cast< char >(0x80 | opcode);
 
@@ -32,7 +38,8 @@ namespace http::websocket::server{
 				data += static_cast< char >(message.size() >> 0x00);
 			}else{
 				data += static_cast< char >(127);
-				data += static_cast< char >((message.size() >> 0x1C >> 0x1C) & 0x8F);
+				data += static_cast< char >((message.size() >> 0x1C >> 0x1C)
+					& 0x8F);
 				data += static_cast< char >(message.size() >> 0x1C >> 0x14);
 				data += static_cast< char >(message.size() >> 0x1C >> 0x0C);
 				data += static_cast< char >(message.size() >> 0x1C >> 0x04);
@@ -47,7 +54,10 @@ namespace http::websocket::server{
 			return std::make_shared< std::string const >(std::move(data));
 		}
 
-		std::shared_ptr< std::string const > build_control_frame_data(websocket::frame::opcode opcode, std::string const& message){
+		std::shared_ptr< std::string const > build_control_frame_data(
+			websocket::frame::opcode opcode,
+			std::string const& message
+		){
 			std::string data;
 			data += static_cast< char >(0x80 | opcode);
 
@@ -60,7 +70,11 @@ namespace http::websocket::server{
 			return std::make_shared< std::string const >(std::move(data));
 		}
 
-		std::shared_ptr< std::string const > build_close_frame_data(websocket::frame::opcode opcode, std::uint16_t status, std::string const& reason){
+		std::shared_ptr< std::string const > build_close_frame_data(
+			websocket::frame::opcode opcode,
+			std::uint16_t status,
+			std::string const& reason
+		){
 			std::string status_string = {
 				static_cast< char >((status >> 8) & 0xFF),
 				static_cast< char >((status     ) & 0xFF),
@@ -77,28 +91,42 @@ namespace http::websocket::server{
 		std::lock_guard< std::mutex > lock(mutex_);
 	}
 
-	void service::add_connection(http::server::connection_ptr const& connection){
+	void service::add_connection(
+		http::server::connection_ptr const& connection
+	){
 		if(shutdown_) return;
 
-		connection->ready_callback([this](http::server::connection_ptr const& connection, boost::system::error_code const& err){
-			if(!err) initialized(connection);
-		});
+		connection->ready_callback([this](
+			http::server::connection_ptr const& connection,
+			error_code const& err){
+				if(!err) initialized(connection);
+			});
 	}
 
 	void service::send_utf8(std::string const& message){
-		send_frame_data(impl::build_data_frame_data(websocket::frame::text_frame, message));
+		send_frame_data(impl::build_data_frame_data(
+			websocket::frame::text_frame, message));
 	}
 
-	void service::send_utf8(std::string const& message, http::server::connection_ptr connection){
-		send_frame_data(impl::build_data_frame_data(websocket::frame::text_frame, message), connection);
+	void service::send_utf8(
+		std::string const& message,
+		http::server::connection_ptr connection
+	){
+		send_frame_data(impl::build_data_frame_data(
+			websocket::frame::text_frame, message), connection);
 	}
 
 	void service::send_binary(std::string const& data){
-		send_frame_data(impl::build_data_frame_data(websocket::frame::binary_frame, data));
+		send_frame_data(impl::build_data_frame_data(
+			websocket::frame::binary_frame, data));
 	}
 
-	void service::send_binary(std::string const& data, http::server::connection_ptr connection){
-		send_frame_data(impl::build_data_frame_data(websocket::frame::binary_frame, data), connection);
+	void service::send_binary(
+		std::string const& data,
+		http::server::connection_ptr connection
+	){
+		send_frame_data(impl::build_data_frame_data(
+			websocket::frame::binary_frame, data), connection);
 	}
 
 	void service::shutdown(std::uint16_t status, std::string const& reason){
@@ -111,7 +139,8 @@ namespace http::websocket::server{
 
 		{
 			std::lock_guard< std::mutex > lock(mutex_);
-			connections_.insert(std::make_pair(connection, std::make_shared< connection_info >()));
+			connections_.insert(std::make_pair(connection,
+				std::make_shared< connection_info >()));
 		}
 
 		if(new_connection_callback_) new_connection_callback_(connection);
@@ -119,13 +148,18 @@ namespace http::websocket::server{
 		receive(connection, "");
 	}
 
-	void service::receive(http::server::connection_ptr const& connection, std::string const& data){
+	void service::receive(
+		http::server::connection_ptr const& connection,
+		std::string const& data
+	){
 		boost::tribool result;
 		auto info = [this, &connection]{
 			std::lock_guard< std::mutex > lock(mutex_);
 
 			auto connection_iter = connections_.find(connection);
-			if (connection_iter == connections_.end()) return std::shared_ptr< connection_info >();
+			if (connection_iter == connections_.end()){
+				return std::shared_ptr< connection_info >();
+			}
 
 			return connection_iter->second;
 		}();
@@ -141,17 +175,22 @@ namespace http::websocket::server{
 			std::tie(result, iter) = parser.parse(frame, iter, data.end());
 
 			// if result equals true, a complete frame was recieved
-			if(result){
-				if(!handle_frame(continuation_frames, frame, connection)) return;
+			if(result && !handle_frame(continuation_frames, frame, connection)){
+				return;
 			}
 		}while(result && iter != data.end());
 
 		if(!result){
 			// There was an error while parsing
-			close(1002, "Read-Error: Parsing-Error in '" + data + "'", connection);
+			close(1002, "Read-Error: Parsing-Error in '" + data + "'",
+				connection);
 		}else{
 			// wait for more messages
-			connection->read([this](http::server::connection_ptr connection, std::string const& data, boost::system::error_code const& err){
+			connection->read([this](
+				http::server::connection_ptr connection,
+				std::string const& data,
+				error_code const& err
+			){
 				if(!err){
 					receive(connection, data);
 				}else{
@@ -161,10 +200,15 @@ namespace http::websocket::server{
 		}
 	}
 
-	bool service::handle_frame(std::vector< frame >& continuation_frames, frame const& frame, http::server::connection_ptr const& connection){
+	bool service::handle_frame(
+		std::vector< frame >& continuation_frames,
+		frame const& frame,
+		http::server::connection_ptr const& connection
+	){
 		// if opcode is a control frame
 		if(frame.code >= 0x8 && !frame.fin){
-			close(1002, "Read-Error: Control-frames must not be fragmentet.", connection);
+			close(1002, "Read-Error: Control-frames must not be fragmentet.",
+				connection);
 			return false;
 		}
 
@@ -172,7 +216,8 @@ namespace http::websocket::server{
 			// data frames
 			case frame::continuation_frame:{
 				if(continuation_frames.size() == 0){
-					close(1002, "Read-Error: Continuation-frame without initial-frame received.", connection);
+					close(1002, "Read-Error: Continuation-frame without "
+						"initial-frame received.", connection);
 					return false;
 				}
 
@@ -182,7 +227,8 @@ namespace http::websocket::server{
 			case frame::text_frame:
 			case frame::binary_frame:{
 				if(continuation_frames.size() > 0){
-					close(1002, "Read-Error: Data-frame while waiting for a continuation-frame.", connection);
+					close(1002, "Read-Error: Data-frame while waiting for a "
+						"continuation-frame.", connection);
 					return false;
 				}
 
@@ -193,9 +239,12 @@ namespace http::websocket::server{
 			// control frames
 			case frame::connection_close:{
 				if(frame.data.size() < 2) return false;
-				std::uint16_t status_code = (static_cast< uint8_t >(frame.data[0]) << 8) | static_cast< uint8_t >(frame.data[1]);
+				std::uint16_t status_code =
+					(static_cast< uint8_t >(frame.data[0]) << 8) |
+					static_cast< uint8_t >(frame.data[1]);
 				std::string message = frame.data.substr(2);
-				close(1000, "Client request: " + message + " (Code: " + std::to_string(status_code) + ")", connection);
+				close(1000, "Client request: " + message +
+					" (Code: " + std::to_string(status_code) + ")", connection);
 				return false;
 			}
 			case frame::ping:{
@@ -207,7 +256,8 @@ namespace http::websocket::server{
 				return true;
 			}
 			default:{
-				close(1003, "Read-Error: Unknown opcode '" + std::to_string(frame.code) + "' received.", connection);
+				close(1003, "Read-Error: Unknown opcode '"
+					+ std::to_string(frame.code) + "' received.", connection);
 				return false;
 			}
 		}
@@ -232,7 +282,8 @@ namespace http::websocket::server{
 				break;
 			}
 			default:{
-				close(1003, "Read-Error: Data-frame Opcode must be text_frame or binary_frame.", connection);
+				close(1003, "Read-Error: Data-frame Opcode must be text_frame "
+					"or binary_frame.", connection);
 				return false;
 			}
 		}
@@ -243,45 +294,72 @@ namespace http::websocket::server{
 	}
 
 	void service::close(std::uint16_t status, std::string const& reason){
-		std::shared_ptr< std::string const > data = impl::build_close_frame_data(websocket::frame::connection_close, status, reason);
+		std::shared_ptr< std::string const > data =
+			impl::build_close_frame_data(
+				websocket::frame::connection_close, status, reason);
 		send_close_frame_data(data);
 	}
 
-	void service::close(std::uint16_t status, std::string const& reason, http::server::connection_ptr const& connection){
-		std::shared_ptr< std::string const > data = impl::build_close_frame_data(websocket::frame::connection_close, status, reason);
+	void service::close(
+		std::uint16_t status,
+		std::string const& reason,
+		http::server::connection_ptr const& connection
+	){
+		std::shared_ptr< std::string const > data =
+			impl::build_close_frame_data(
+				websocket::frame::connection_close, status, reason);
 		send_close_frame_data(data, connection);
 	}
 
-	void service::pong(std::string const& message, http::server::connection_ptr const& connection){
-		std::shared_ptr< std::string const > data = impl::build_control_frame_data(websocket::frame::connection_close, message);
+	void service::pong(
+		std::string const& message,
+		http::server::connection_ptr const& connection
+	){
+		std::shared_ptr< std::string const > data =
+			impl::build_control_frame_data(
+				websocket::frame::connection_close, message);
 		send_frame_data(data, connection);
 	}
 
-	void service::send_frame_data(std::shared_ptr< std::string const > const& data){
+	void service::send_frame_data(
+		std::shared_ptr< std::string const > const& data
+	){
 		for(auto connection: get_connections()){
 			send_frame_data(data, connection);
 		}
 	}
 
-	void service::send_frame_data(std::shared_ptr< std::string const > const& data, http::server::connection_ptr const& connection){
+	void service::send_frame_data(
+		std::shared_ptr< std::string const > const& data,
+		http::server::connection_ptr const& connection
+	){
 		if(auto error = connection->write(data)){
-			logsys::log([&error](logsys::stdlogb& os){ os << "WebSocket service write error: " << error.message(); });
+			logsys::log([&error](logsys::stdlogb& os){
+				os << "WebSocket service write error: " << error.message();
+			});
 			remove_connection(connection);
 		}
 	}
 
-	void service::send_close_frame_data(std::shared_ptr< std::string const > const& data){
+	void service::send_close_frame_data(
+		std::shared_ptr< std::string const > const& data
+	){
 		for(auto connection: get_connections()){
 			send_close_frame_data(data, connection);
 		}
 	}
 
-	void service::send_close_frame_data(std::shared_ptr< std::string const > const& data, http::server::connection_ptr const& connection){
+	void service::send_close_frame_data(
+		std::shared_ptr< std::string const > const& data,
+		http::server::connection_ptr const& connection
+	){
 		connection->write(data);
 		remove_connection(connection);
 	}
 
-	void service::remove_connection(http::server::connection_ptr const& connection){
+	void service::remove_connection(
+		http::server::connection_ptr const& connection
+	){
 		if(connection_close_callback_) connection_close_callback_(connection);
 
 		std::lock_guard< std::mutex > lock(mutex_);

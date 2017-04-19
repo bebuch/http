@@ -22,14 +22,24 @@ namespace http::server{
 	/// \brief Handles callback-file-request
 	class callback_file_request_handler: public basic_file_request_handler {
 	public:
-		/// \brief Construct with a subdirectory containing virtual files to be served.
+		/// \brief Construct with a subdirectory containing virtual files to be
+		///        served.
 		callback_file_request_handler(std::string const& dir = "");
 
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(connection_ptr const& connection, http::request const& req, http::reply& rep) override;
+		virtual bool handle_request(
+			connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		) override;
 
 		/// \brief Add a new virtual file
-		bool add(std::string const& filename, std::string const& mime_type, std::function< std::string(http::request const& req) > const& callback);
+		bool add(
+			std::string const& filename,
+			std::string const& mime_type,
+			std::function< std::string(http::request const& req) > const&
+				callback
+		);
 
 		/// \brief erase a file
 		bool erase(std::string const& filename);
@@ -42,7 +52,10 @@ namespace http::server{
 		std::string const dir_;
 
 		/// \brief map< filename, tuple< mime_type, content > >
-		std::map< std::string, std::tuple< std::string, std::function< std::string(http::request const& req) > > > files_;
+		std::map< std::string, std::tuple<
+				std::string,
+				std::function< std::string(http::request const& req) >
+			> > files_;
 	};
 
 

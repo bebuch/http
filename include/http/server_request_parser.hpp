@@ -30,12 +30,14 @@ namespace http::server{
 
 		/// \brief Parse some data.
 		///
-		/// The tribool return value is true when a complete request
-		/// has been parsed, false if the data is invalid, indeterminate when more
-		/// data is required. The InputIterator return value indicates how much of the
-		/// input has been consumed.
+		/// The tribool return value is true when a complete request has been
+		/// parsed, false if the data is invalid, indeterminate when more data
+		/// is required. The InputIterator return value indicates how much of
+		/// the input has been consumed.
 		template < typename InputIterator >
-		std::tuple< boost::tribool, InputIterator > parse(http::request& req, InputIterator begin, InputIterator end){
+		std::tuple< boost::tribool, InputIterator > parse(
+			http::request& req, InputIterator begin, InputIterator end
+		){
 			while(begin != end){
 				boost::tribool result = consume(req, *begin++);
 				if(result || !result){

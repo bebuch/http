@@ -21,14 +21,23 @@ namespace http::server{
 	/// \brief Handles virtual-file-request
 	class virtual_file_request_handler: public basic_file_request_handler{
 	public:
-		/// \brief Construct with a subdirectory containing virtual files to be served.
+		/// \brief Construct with a subdirectory containing virtual files to be
+		///        served.
 		virtual_file_request_handler(std::string const& dir = "");
 
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(connection_ptr const& connection, http::request const& req, http::reply& rep) override;
+		virtual bool handle_request(
+			connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		) override;
 
 		/// \brief Add a new virtual file
-		bool add(std::string const& filename, std::string const& mime_type, std::string const& content);
+		bool add(
+			std::string const& filename,
+			std::string const& mime_type,
+			std::string const& content
+		);
 
 		/// \brief erase a file
 		bool erase(std::string const& filename);

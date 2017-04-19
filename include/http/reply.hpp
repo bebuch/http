@@ -20,6 +20,9 @@
 namespace http{
 
 
+	namespace asio = boost::asio;
+
+
 	/// \brief A reply to be sent to a client.
 	struct reply{
 		/// \brief The status of the reply.
@@ -82,7 +85,7 @@ namespace http{
 		/// The buffers do not own the underlying memory blocks,
 		/// therefore the reply object must remain valid and
 		/// not be changed until the write operation has completed.
-		std::vector< boost::asio::const_buffer > to_buffers() const;
+		std::vector< asio::const_buffer > to_buffers() const;
 
 		/// \brief Get a stock reply.
 		static reply stock_reply(status_type status);

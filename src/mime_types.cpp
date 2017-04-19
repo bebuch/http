@@ -16,14 +16,16 @@
 namespace http::mime_types{
 
 
-
 	std::map< std::string, std::string > const& extension_to_type_mapper(){
-		static std::map< std::string, std::string > const result = config::mime_types::init_extension_to_type_mapper();
+		static std::map< std::string, std::string > const result =
+			config::mime_types::init_extension_to_type_mapper();
 		return result;
 	}
 
 	std::string extension_to_type(std::string const& extension){
-		auto iter = extension_to_type_mapper().find(boost::algorithm::to_lower_copy(extension));
+		auto iter = extension_to_type_mapper()
+			.find(boost::algorithm::to_lower_copy(extension));
+
 		if(iter != extension_to_type_mapper().end()){
 			return iter->second;
 		}
@@ -35,7 +37,8 @@ namespace http::mime_types{
 }
 
 
-std::map< std::string, std::string > http::config::mime_types::init_extension_to_type_mapper(){
+std::map< std::string, std::string >
+http::config::mime_types::init_extension_to_type_mapper(){
 	return std::map< std::string, std::string >{
 		{"gif" , "image/gif"       },
 		{"htm" , "text/html"       },

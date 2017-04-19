@@ -96,7 +96,8 @@ namespace http::server{
 			}
 		case http_version_major_start:
 			if(is_digit(input)){
-				req.http_version_major = req.http_version_major * 10 + input - '0';
+				req.http_version_major = req.http_version_major * 10 + input
+					- '0';
 				state_ = http_version_major;
 				return boost::indeterminate;
 			}else{
@@ -107,14 +108,16 @@ namespace http::server{
 				state_ = http_version_minor_start;
 				return boost::indeterminate;
 			}else if(is_digit(input)){
-				req.http_version_major = req.http_version_major * 10 + input - '0';
+				req.http_version_major = req.http_version_major * 10 + input
+					- '0';
 				return boost::indeterminate;
 			}else{
 				return false;
 			}
 		case http_version_minor_start:
 			if(is_digit(input)){
-				req.http_version_minor = req.http_version_minor * 10 + input - '0';
+				req.http_version_minor = req.http_version_minor * 10 + input
+					- '0';
 				state_ = http_version_minor;
 				return boost::indeterminate;
 			}else{
@@ -125,7 +128,8 @@ namespace http::server{
 				state_ = expecting_newline_1;
 				return boost::indeterminate;
 			}else if(is_digit(input)){
-				req.http_version_minor = req.http_version_minor * 10 + input - '0';
+				req.http_version_minor = req.http_version_minor * 10 + input
+					- '0';
 				return boost::indeterminate;
 			}else{
 				return false;

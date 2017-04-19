@@ -15,10 +15,11 @@
 
 namespace http{
 
+
 	namespace config::mime_types{
 
 
-			std::map< std::string, std::string > init_extension_to_type_mapper();
+		std::map< std::string, std::string > init_extension_to_type_mapper();
 
 
 	}

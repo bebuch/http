@@ -29,17 +29,10 @@ namespace http::websocket::server{
 
 
 		inline std::string base64_encoded(std::string const& text){
-			typedef
-				boost::archive::iterators::insert_linebreaks<
-					boost::archive::iterators::base64_from_binary<
-						boost::archive::iterators::transform_width<
-							char const*,
-							6,
-							8
-						>
-					>,
-					72
-				> base64_text;
+			using namespace boost::archive::iterators;
+			using base64_text = insert_linebreaks<
+				base64_from_binary< transform_width< char const*, 6, 8 > >,
+				72 >;
 
 			std::ostringstream os;
 			std::copy(
@@ -70,7 +63,10 @@ namespace http::websocket::server{
 	}
 
 
-	bool request_handler::handle_request(http::server::connection_ptr const& connection_ptr, http::request const& req, http::reply& rep){
+	bool request_handler::handle_request(
+		http::server::connection_ptr const& connection_ptr,
+		http::request const& req, http::reply& rep
+	){
 		// Request path must be absolute.
 		if(req.uri.empty() || req.uri[0] != '/'){
 			rep = http::reply::stock_reply(http::reply::bad_request);
@@ -84,7 +80,8 @@ namespace http::websocket::server{
 			return false;
 		}
 		std::vector< std::string > tokens;
-		boost::algorithm::split(tokens, connection_header->second, boost::algorithm::is_any_of(","));
+		boost::algorithm::split(tokens, connection_header->second,
+			boost::algorithm::is_any_of(","));
 		for(std::string& token: tokens) boost::algorithm::trim(token);
 		if(find(tokens.begin(), tokens.end(), "Upgrade") == tokens.end()){
 			rep = http::reply::stock_reply(http::reply::bad_request);
@@ -93,7 +90,9 @@ namespace http::websocket::server{
 
 		// Check for the required header field "Upgrade"
 		auto upgrade_header = req.headers.find("Upgrade");
-		if(upgrade_header == req.headers.end() || upgrade_header->second != "websocket"){
+		if(upgrade_header == req.headers.end()
+			|| upgrade_header->second != "websocket"
+		){
 			rep = http::reply::stock_reply(http::reply::bad_request);
 			return false;
 		}
@@ -140,8 +139,10 @@ namespace http::websocket::server{
 		rep.headers.insert(*upgrade_header);
 
 		// Create and add the respond key.
-		std::string magic_key = key->second + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-		rep.headers.insert(make_pair("Sec-WebSocket-Accept", impl::base64_encoded(impl::sha1_hash(magic_key)) + "="));
+		std::string magic_key = key->second
+			+ "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+		rep.headers.insert(make_pair("Sec-WebSocket-Accept",
+			impl::base64_encoded(impl::sha1_hash(magic_key)) + "="));
 
 		return true;
 	}
@@ -152,7 +153,10 @@ namespace http::websocket::server{
 		}
 	}
 
-	bool request_handler::register_service(std::string const& name, service_ptr const& reg){
+	bool request_handler::register_service(
+		std::string const& name,
+		service_ptr const& reg
+	){
 		if(services_.find(name) != services_.end()) return false;
 
 		services_.insert(make_pair(name, reg));

@@ -15,8 +15,13 @@
 namespace http::server{
 
 
-	bool basic_file_request_handler::check_uri(http::request const& req, http::reply& rep)const{
-		if(req.uri.empty() || req.uri[0] != '/' || req.uri.find("/..") != std::string::npos){
+	bool basic_file_request_handler::check_uri(
+		http::request const& req,
+		http::reply& rep
+	)const{
+		if(req.uri.empty() || req.uri[0] != '/' ||
+			req.uri.find("/..") != std::string::npos
+		){
 			rep = reply::stock_reply(reply::bad_request);
 			return false;
 		}
@@ -24,7 +29,9 @@ namespace http::server{
 		return true;
 	}
 
-	std::string basic_file_request_handler::get_file_extension(std::string const& filename)const{
+	std::string basic_file_request_handler::get_file_extension(
+		std::string const& filename
+	)const{
 		std::size_t last_slash_pos = filename.find_last_of("/");
 		std::size_t last_dot_pos = filename.find_last_of(".");
 
@@ -36,9 +43,13 @@ namespace http::server{
 		return "";
 	}
 
-	void basic_file_request_handler::set_http_header(http::reply& rep, std::string const& mime_type)const{
+	void basic_file_request_handler::set_http_header(
+		http::reply& rep,
+		std::string const& mime_type
+	)const{
 		rep.headers.clear();
-		rep.headers.insert(make_pair("Content-Length", std::to_string(rep.content.size())));
+		rep.headers.insert(make_pair("Content-Length",
+			std::to_string(rep.content.size())));
 		rep.headers.insert(make_pair("Content-Type", mime_type));
 	}
 

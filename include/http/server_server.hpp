@@ -48,16 +48,19 @@ namespace http::server{
 		void stop_accept();
 
 		/// \brief Handle completion of an asynchronous accept operation.
-		void handle_accept(connection_ptr const& new_connection, boost::system::error_code const& err);
+		void handle_accept(
+			connection_ptr const& new_connection,
+			error_code const& err
+		);
 
 		/// \brief The handler for all incoming requests.
 		std::unique_ptr< request_handler > request_handler_;
 
 		/// \brief The io_service used to perform asynchronous operations.
-		boost::asio::io_service io_service_;
+		asio::io_service io_service_;
 
 		/// \brief Acceptor used to listen for incoming connections.
-		boost::asio::ip::tcp::acceptor acceptor_;
+		tcp::acceptor acceptor_;
 
 		/// \brief Thread synchronization.
 		std::mutex acceptor_mutex_;

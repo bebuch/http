@@ -27,17 +27,19 @@ namespace http::server{
 		request_handler_(std::move(handler)),
 		acceptor_(io_service_)
 	{
-		// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
-		boost::asio::ip::tcp::resolver resolver(io_service_);
-		boost::asio::ip::tcp::resolver::query query(port);
-		boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
+		// Open the acceptor with the option to reuse the address
+		// (i.e. SO_REUSEADDR).
+		tcp::resolver resolver(io_service_);
+		tcp::resolver::query query(port);
+		tcp::endpoint endpoint = *resolver.resolve(query);
 		acceptor_.open(endpoint.protocol());
-		acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+		acceptor_.set_option(tcp::acceptor::reuse_address(true));
 
 		try{
 			acceptor_.bind(endpoint);
 		}catch(std::runtime_error const& error){
-			throw std::runtime_error("Binding server to endpoint failed (Port: " + port + "); " + error.what());
+			throw std::runtime_error("Binding server to endpoint failed (Port: "
+				+ port + "); " + error.what());
 		}
 
 		acceptor_.listen();
@@ -84,7 +86,7 @@ namespace http::server{
 
 		acceptor_.async_accept(
 			new_connection->socket(),
-			[this, new_connection](boost::system::error_code const& err){
+			[this, new_connection](error_code const& err){
 				handle_accept(new_connection, err);
 			}
 		);
@@ -96,7 +98,10 @@ namespace http::server{
 		acceptor_.close();
 	}
 
-	void server::handle_accept(connection_ptr const& new_connection, boost::system::error_code const& err){
+	void server::handle_accept(
+		connection_ptr const& new_connection,
+		error_code const& err
+	){
 		if(!err){
 			new_connection->start(*request_handler_);
 		}

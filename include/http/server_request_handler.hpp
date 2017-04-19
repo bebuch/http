@@ -39,7 +39,11 @@ namespace http::server{
 		virtual ~request_handler(){}
 
 		/// \brief Handle a request and produce a reply.
-		virtual bool handle_request(connection_ptr const& connection, http::request const& req, http::reply& rep) = 0;
+		virtual bool handle_request(
+			connection_ptr const& connection,
+			http::request const& req,
+			http::reply& rep
+		) = 0;
 
 		/// \brief Is called by server shutdown
 		virtual void shutdown(){}

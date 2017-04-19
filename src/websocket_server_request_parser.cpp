@@ -19,7 +19,10 @@ namespace http::websocket::server{
 	namespace impl{ // Never use these functions direct
 
 
-		std::string data_decode(std::string const& in, std::uint32_t masking_key){
+		std::string data_decode(
+			std::string const& in,
+			std::uint32_t masking_key
+		){
 			std::array< unsigned char, 4 > key = {{
 				static_cast< unsigned char >((masking_key >> 24) & 0xFF),
 				static_cast< unsigned char >((masking_key >> 16) & 0xFF),
@@ -115,7 +118,8 @@ namespace http::websocket::server{
 			}
 			case masking_key:{
 				++counter_;
-				masking_key_ = (masking_key_ << 8) | static_cast< std::uint8_t >(input);
+				masking_key_ =
+					(masking_key_ << 8) | static_cast< std::uint8_t >(input);
 
 				if(counter_ == 4){
 					state_ = payload_data;
