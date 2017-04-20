@@ -131,7 +131,7 @@ namespace http::websocket::server{
 		}
 
 		// Add the connection to websocket service
-		ws_service->second->add_connection(connection_ptr);
+		ws_service->second.get().add_connection(connection_ptr);
 
 		// Accept the protocol switching.
 		rep = http::reply::stock_reply(http::reply::switching_protocols);
@@ -149,17 +149,17 @@ namespace http::websocket::server{
 
 	void request_handler::shutdown(){
 		for(auto& service: services_){
-			service.second->shutdown(1001, "Server shutdown");
+			service.second.get().shutdown(1001, "Server shutdown");
 		}
 	}
 
 	bool request_handler::register_service(
 		std::string const& name,
-		service_ptr const& reg
+		service& reg
 	){
 		if(services_.find(name) != services_.end()) return false;
 
-		services_.insert(make_pair(name, reg));
+		services_.insert(make_pair(name, std::ref(reg)));
 		return true;
 	}
 

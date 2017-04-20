@@ -12,6 +12,7 @@
 #include "server_request_handler.hpp"
 
 #include <map>
+#include <utility>
 
 
 namespace http::websocket::server{
@@ -37,12 +38,12 @@ namespace http::websocket::server{
 		/// \brief Binds a name to websocket service.
 		bool register_service(
 			std::string const& name,
-			service_ptr const& service
+			service& service
 		);
 
 	private:
 		/// \brief The websocket services
-		std::map< std::string, service_ptr > services_;
+		std::map< std::string, std::reference_wrapper< service > > services_;
 	};
 
 

@@ -30,12 +30,13 @@ namespace http::server{
 		/// \brief Construct the server to listen on the specified TCP port.
 		server(
 			std::string const& port,
-			std::unique_ptr< request_handler >&& handler,
+			http::server::request_handler& handler,
 			std::size_t thread_pool_size
 		);
 
 		/// \brief Tell all handlers, that the server shutdowns
 		~server();
+
 
 	private:
 		/// \brief Run the server's io_service loop.
@@ -54,7 +55,7 @@ namespace http::server{
 		);
 
 		/// \brief The handler for all incoming requests.
-		std::unique_ptr< request_handler > request_handler_;
+		http::server::request_handler& request_handler_;
 
 		/// \brief The io_service used to perform asynchronous operations.
 		asio::io_service io_service_;

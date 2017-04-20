@@ -20,7 +20,7 @@ namespace http::websocket::server{
 	using boost::system::error_code;
 
 
-	namespace impl{ // Never use these functions direct
+	namespace{
 
 
 		std::shared_ptr< std::string const > build_data_frame_data(
@@ -87,9 +87,18 @@ namespace http::websocket::server{
 	}
 
 
-	service::~service(){
-		std::lock_guard< std::mutex > lock(mutex_);
-	}
+	service::service(
+		data_callback_fn const& utf8_callback,
+		data_callback_fn const& binary_callback,
+		info_callback_fn const& new_connection_callback,
+		info_callback_fn const& connection_close_callback
+	):
+		utf8_callback_(utf8_callback),
+		binary_callback_(binary_callback),
+		new_connection_callback_(new_connection_callback),
+		connection_close_callback_(connection_close_callback),
+		shutdown_(false)
+		{}
 
 	void service::add_connection(
 		http::server::connection_ptr const& connection
@@ -104,7 +113,7 @@ namespace http::websocket::server{
 	}
 
 	void service::send_utf8(std::string const& message){
-		send_frame_data(impl::build_data_frame_data(
+		send_frame_data(build_data_frame_data(
 			websocket::frame::text_frame, message));
 	}
 
@@ -112,12 +121,12 @@ namespace http::websocket::server{
 		std::string const& message,
 		http::server::connection_ptr connection
 	){
-		send_frame_data(impl::build_data_frame_data(
+		send_frame_data(build_data_frame_data(
 			websocket::frame::text_frame, message), connection);
 	}
 
 	void service::send_binary(std::string const& data){
-		send_frame_data(impl::build_data_frame_data(
+		send_frame_data(build_data_frame_data(
 			websocket::frame::binary_frame, data));
 	}
 
@@ -125,7 +134,7 @@ namespace http::websocket::server{
 		std::string const& data,
 		http::server::connection_ptr connection
 	){
-		send_frame_data(impl::build_data_frame_data(
+		send_frame_data(build_data_frame_data(
 			websocket::frame::binary_frame, data), connection);
 	}
 
@@ -295,7 +304,7 @@ namespace http::websocket::server{
 
 	void service::close(std::uint16_t status, std::string const& reason){
 		std::shared_ptr< std::string const > data =
-			impl::build_close_frame_data(
+			build_close_frame_data(
 				websocket::frame::connection_close, status, reason);
 		send_close_frame_data(data);
 	}
@@ -306,7 +315,7 @@ namespace http::websocket::server{
 		http::server::connection_ptr const& connection
 	){
 		std::shared_ptr< std::string const > data =
-			impl::build_close_frame_data(
+			build_close_frame_data(
 				websocket::frame::connection_close, status, reason);
 		send_close_frame_data(data, connection);
 	}
@@ -316,7 +325,7 @@ namespace http::websocket::server{
 		http::server::connection_ptr const& connection
 	){
 		std::shared_ptr< std::string const > data =
-			impl::build_control_frame_data(
+			build_control_frame_data(
 				websocket::frame::connection_close, message);
 		send_frame_data(data, connection);
 	}

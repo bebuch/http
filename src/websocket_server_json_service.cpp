@@ -13,22 +13,54 @@
 namespace http::websocket::server{
 
 
+	namespace{
+
+
+		class json_callback_type{
+		public:
+			json_callback_type(json_callback_fn const& f):
+				json_callback_(f) {}
+
+
+			void operator()(
+				std::string const& message,
+				http::server::connection_ptr const& connection
+			)const{
+				if (!json_callback_) return;
+
+				ptree data;
+				std::istringstream is(message);
+				read_json(is, data);
+				json_callback_(data, connection);
+			}
+
+
+		private:
+			json_callback_fn json_callback_;
+		};
+
+
+	}
+
+
+	json_service::json_service(
+		json_callback_fn const& json_callback,
+		data_callback_fn const& binary_callback,
+		info_callback_fn const& new_connection_callback,
+		info_callback_fn const& connection_close_callback
+	):
+		service(
+			json_callback_type(json_callback),
+			binary_callback,
+			new_connection_callback,
+			connection_close_callback
+		) {}
+
+
 	std::string to_json(ptree const& data){
 		std::ostringstream message;
 		write_json(message, data);
 		return message.str();
-	}
-
-	void json_service::json_callback_type::operator()(
-		std::string const& message,
-		http::server::connection_ptr const& connection
-	)const{
-		if (!json_callback_) return;
-
-		ptree data;
-		std::istringstream is(message);
-		read_json(is, data);
-		json_callback_(data, connection);
 	}
 
 	void json_service::send_json(ptree const& data){

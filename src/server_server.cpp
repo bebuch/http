@@ -21,10 +21,10 @@ namespace http::server{
 
 	server::server(
 		std::string const& port,
-		std::unique_ptr< request_handler >&& handler,
+		request_handler& handler,
 		std::size_t thread_pool_size
 	):
-		request_handler_(std::move(handler)),
+		request_handler_(handler),
 		acceptor_(io_service_)
 	{
 		// Open the acceptor with the option to reuse the address
@@ -57,7 +57,7 @@ namespace http::server{
 				stop_accept();
 
 				// Tell the handler that the server shutdowns
-				request_handler_->shutdown();
+				request_handler_.shutdown();
 
 				for(auto& future: futures_){
 					if(future.valid()) future.wait();
@@ -103,7 +103,7 @@ namespace http::server{
 		error_code const& err
 	){
 		if(!err){
-			new_connection->start(*request_handler_);
+			new_connection->start(request_handler_);
 		}
 
 		start_accept();

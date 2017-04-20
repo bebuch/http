@@ -19,13 +19,6 @@
 namespace http::websocket::server{
 
 
-	class service;
-
-
-	using service_ptr = std::shared_ptr< service >;
-	using weak_service_ptr = std::weak_ptr< service >;
-
-
 	using data_callback_fn = std::function<
 		void(std::string const&, http::server::connection_ptr const&) >;
 
@@ -36,8 +29,15 @@ namespace http::websocket::server{
 	/// \brief Sending and receiving messages via Websocket
 	class service{
 	public:
-		/// \brief Virtual Standard-Destructor
-		virtual ~service();
+		/// \brief Construct the service
+		service(
+			data_callback_fn const& utf8_callback = data_callback_fn(),
+			data_callback_fn const& binary_callback = data_callback_fn(),
+			info_callback_fn const& new_connection_callback =
+				info_callback_fn(),
+			info_callback_fn const& connection_close_callback =
+				info_callback_fn()
+		);
 
 
 		/// \brief Add a TCP connection, which is initialized as a WebSocket
@@ -83,23 +83,6 @@ namespace http::websocket::server{
 		);
 
 
-	protected:
-		/// \brief Construct the service
-		service(
-			data_callback_fn utf8_callback = data_callback_fn(),
-			data_callback_fn binary_callback = data_callback_fn(),
-			info_callback_fn new_connection_callback = info_callback_fn(),
-			info_callback_fn connection_close_callback = info_callback_fn()
-		):
-			utf8_callback_(utf8_callback),
-			binary_callback_(binary_callback),
-			new_connection_callback_(new_connection_callback),
-			connection_close_callback_(connection_close_callback),
-			shutdown_(false)
-			{}
-
-
-
 	private:
 		/// \brief Every connection has its own parser and list of continuation
 		///        frames
@@ -133,7 +116,7 @@ namespace http::websocket::server{
 		info_callback_fn connection_close_callback_;
 
 		/// \brief true, if the function shutdown() was called
-		bool shutdown_;
+		std::atomic< bool > shutdown_;
 
 		/// \brief Callback for connection::ready_callback
 		void initialized(http::server::connection_ptr const& connection);
@@ -186,21 +169,7 @@ namespace http::websocket::server{
 
 		/// \brief Get all keys of connections_
 		std::vector< http::server::connection_ptr > get_connections();
-
-
-		template < typename ... Params >
-		friend service_ptr make_shared_service(Params&& ... params);
 	};
-
-
-	/// \brief Service Factory
-	///
-	/// Same parameter as service's protected constructors
-	template < typename ... Params >
-	inline service_ptr make_shared_service(Params&& ... params){
-		return service_ptr(new service(std::forward< Params >(params) ...));
-	}
-
 
 
 }
