@@ -20,6 +20,7 @@ file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 		var socket = new WebSocket('ws://' + window.location.host + '/scheduler');
 		socket.binaryType = 'arraybuffer';
 		socket.onmessage = function(evt){
+			console.log("onmessage");
 			if(evt.data instanceof ArrayBuffer){
 				var length = evt.data.byteLength;
 				var blob = new Blob([evt.data],{type:'image/png'});
@@ -33,10 +34,19 @@ file LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt)
 				}
 				img.src = url;
 				socket.send(JSON.stringify({'ready': true}));
+			}else if(typeof(evt.data) === 'string'){
+				console.log("onmessage string: " + evt.data);
 			}
 		};
-		socket.onopen = function(){
+		socket.onopen = function(event){
+			console.log("onopen: " + JSON.stringify(event));
 			socket.send(JSON.stringify({'ready': true}));
+		};
+		socket.onerror = function(event){
+			console.log("onerror: " + JSON.stringify(event));
+		};
+		socket.onclose = function(event){
+			console.log("onclose: " + JSON.stringify(event));
 		};
 	</script>
 </body>

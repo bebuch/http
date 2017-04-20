@@ -65,15 +65,15 @@ namespace http::websocket::server{
 		/// \brief Send a close frame to all clients
 		void close(
 			std::uint16_t status,
-			 std::string const& reason = std::string()
-				  );
+			std::string const& reason = std::string()
+		);
 
 		/// \brief Send a close frame to a client
 		void close(
 			std::uint16_t status,
-			 std::string const& data,
-			 http::server::connection_ptr const& connection
-				  );
+			std::string const& data,
+			http::server::connection_ptr const& connection
+		);
 
 		/// \brief Reject all new connections and send a close frame to all
 		///        clients

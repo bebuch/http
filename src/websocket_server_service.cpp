@@ -28,6 +28,16 @@ namespace http::websocket::server{
 			std::string const& message
 		){
 			std::string data;
+
+			// preallocate string memory
+			if(message.size() < 126){
+				data.reserve(message.size() + 2);
+			}else if(message.size() < 0x10000){
+				data.reserve(message.size() + 4);
+			}else{
+				data.reserve(message.size() + 10);
+			}
+
 			data += static_cast< char >(0x80 | opcode);
 
 			if(message.size() < 126){
@@ -61,10 +71,13 @@ namespace http::websocket::server{
 			std::string data;
 			data += static_cast< char >(0x80 | opcode);
 
-			// ignore a to big message
 			if(message.size() < 126){
 				data += static_cast< char >(message.size());
 				data += message;
+			}else{
+				throw std::logic_error(
+					"control frame message is larger than 125 bytes: "
+					+ std::to_string(message.size()));
 			}
 
 			return std::make_shared< std::string const >(std::move(data));
@@ -108,7 +121,14 @@ namespace http::websocket::server{
 		connection->ready_callback([this](
 			http::server::connection_ptr const& connection,
 			error_code const& err){
-				if(!err) initialized(connection);
+				if(!err){
+					initialized(connection);
+				}else{
+					logsys::log([&err](logsys::stdlogb& os){
+						os << "Error: WebSocket ready_callback: "
+							<< err.message();
+					});
+				}
 			});
 	}
 
@@ -148,6 +168,9 @@ namespace http::websocket::server{
 
 		{
 			std::lock_guard< std::mutex > lock(mutex_);
+			logsys::log([&connection](logsys::stdlogb& os){
+				os << "Add connection " << connection.get();
+			});
 			connections_.insert(std::make_pair(connection,
 				std::make_shared< connection_info >()));
 		}
@@ -184,8 +207,10 @@ namespace http::websocket::server{
 			std::tie(result, iter) = parser.parse(frame, iter, data.end());
 
 			// if result equals true, a complete frame was recieved
-			if(result && !handle_frame(continuation_frames, frame, connection)){
-				return;
+			if(result){
+				if(!handle_frame(continuation_frames, frame, connection)){
+					return;
+				}
 			}
 		}while(result && iter != data.end());
 
@@ -303,6 +328,9 @@ namespace http::websocket::server{
 	}
 
 	void service::close(std::uint16_t status, std::string const& reason){
+		logsys::log([&reason](logsys::stdlogb& os){
+			os << "Close all connections: " << reason;
+		});
 		std::shared_ptr< std::string const > data =
 			build_close_frame_data(
 				websocket::frame::connection_close, status, reason);
@@ -314,6 +342,9 @@ namespace http::websocket::server{
 		std::string const& reason,
 		http::server::connection_ptr const& connection
 	){
+		logsys::log([&connection, &reason](logsys::stdlogb& os){
+			os << "Close connection " << connection.get() << ": " << reason;
+		});
 		std::shared_ptr< std::string const > data =
 			build_close_frame_data(
 				websocket::frame::connection_close, status, reason);
@@ -342,9 +373,9 @@ namespace http::websocket::server{
 		std::shared_ptr< std::string const > const& data,
 		http::server::connection_ptr const& connection
 	){
-		if(auto error = connection->write(data)){
-			logsys::log([&error](logsys::stdlogb& os){
-				os << "WebSocket service write error: " << error.message();
+		if(auto err = connection->write(data)){
+			logsys::log([&err](logsys::stdlogb& os){
+				os << "Error: WebSocket service write: " << err.message();
 			});
 			remove_connection(connection);
 		}
