@@ -20,7 +20,7 @@ namespace http::websocket::server{
 		info_callback_fn const& connection_close_callback
 	):
 		service(
-			[this, json_callback](
+			[json_callback](
 				std::string const& message,
 				http::server::connection_ptr const& connection
 			){
