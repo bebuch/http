@@ -157,11 +157,20 @@ namespace http::websocket::server{
 		std::string const& name,
 		service& reg
 	){
-		if(services_.find(name) != services_.end()) return false;
+		return services_.emplace(name, std::ref(reg)).second;
+	}
 
-		services_.insert(make_pair(name, std::ref(reg)));
+	bool request_handler::shutdown_service(std::string const& name){
+		auto iter = services_.find(name);
+
+		if(iter == services_.end()) return false;
+
+		iter->second.get().shutdown(1001, "Websocket shutdown");
+
+		services_.erase(iter);
 		return true;
 	}
+
 
 
 }

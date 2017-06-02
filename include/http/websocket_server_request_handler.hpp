@@ -41,6 +41,9 @@ namespace http::websocket::server{
 			service& service
 		);
 
+		/// \brief Send a shutdown message and remove the named service
+		bool shutdown_service(std::string const& name);
+
 	private:
 		/// \brief The websocket services
 		std::map< std::string, std::reference_wrapper< service > > services_;
